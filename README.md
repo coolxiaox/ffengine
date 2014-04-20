@@ -3,7 +3,7 @@ ffengine
 
 ffengine是高效的tcp 服务器框架，适用于端游、页游、手游的实时服务器
 
-## FFRPC Feature
+## ffengine Feature
  *  组件化，ffengine 包含两个重要组件gate和scene，但是集成在一个进程中，既可以把两个组件启动到一个进程中，也可以启动到多个进程中，甚至启动到分布式环境，只需要修改一下ip，这得益于ffengine使用了原创的ffrpc通信库，使得进程间通讯非常的高效和简洁。
  *  通信异步化，组件之间的通信都是异步完成的，不会阻塞主线程，这样ffengine采用的单（主）线程的架构技能发挥稳定和简单的特点，又能保持高效，最大程度发挥IO的效率。
  *  数据库异步化，我们知道内存计算是飞快的，但是数据库操作设计到io，效率低一个数量级，所以ffengine数据库的访问采用异步加回调的方式，加上python 对于lambda的完美支持，异步加回调非常的容易。
@@ -14,7 +14,7 @@ ffengine是高效的tcp 服务器框架，适用于端游、页游、手游的�
  *  实时性能监控，人们常常抱怨脚本语言运行慢，其实很大程度上是开发者在开发的过程中对于性能不敏感，刚开始项目小的时候运行很快，但是项目大了，运行就慢了，又找不到原因，简单归结于语言是不正确的。ffengine很大程度上从基础设施上支持性能数据采集，ffengine的每个接口都会被记录性能数据，每隔一段时间（默认一小时）输出汇总数据到文件中，可以通过工具可以图形化查看。这样系统慢了我们可以很清晰的知道是哪个接口导致的，同时当系统出现意外的卡顿时，可以方便查询问题，比如数据库变慢了，查看性能接口数据就可以知道，另外有些接口在某些时段会变慢，这个都可以通过性能数据很好的分析出来。
  *  
 
-## FFRPC example 构建一个服务器只需要三步
+## ffengine example 构建一个服务器只需要三步
  *  使用@ffext.on_login 处理玩家登陆游戏
  *  使用@ffext.on_logout 处理玩家退出游戏
  *  使用@ffext.reg 处理玩家的逻辑操作
@@ -150,3 +150,27 @@ def process_enter(session, msg):
 
 
 ```
+
+## ffengine Install 
+操作系统：Linux Centos
+数据库： Mysql-client
+Python：2.6 ~ 2.7
+
+1. 下载代码：
+    svn checkoout https://github.com/fanchy/FFRPC
+2. 编译
+   cd bin
+   make
+
+3. 修改配置
+    default.config 为配置文件，可以相应的修改ip 端口等参数
+
+4. 启动
+   ./app_game -f default.config
+
+5. 示例客户端，
+    打开页面： http://ffown.sinaapp.com/front/html5_rpg/
+   修改ip 端口，连接自己刚才的服务器
+
+
+
