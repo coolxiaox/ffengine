@@ -1,0 +1,10 @@
+// See README.txt for information and build instructions.
+
+package ff;
+
+message pb_echo_in_t {
+  required string data = 1;
+}
+message pb_echo_out_t {
+  required string data = 1;
+}
