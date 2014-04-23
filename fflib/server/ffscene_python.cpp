@@ -440,11 +440,20 @@ ffslot_t::callback_t* ffscene_python_t::gen_verify_callback()
             PERF(ffscene->get_py_cmd2msg(data->cmd));
             try
             {
+                /*I decide using below code to optimize 
                 ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name,
-                                                                               data->cmd, data->msg_body,
-                                                                               data->socket_id,
-                                                                               data->ip, data->gate_name);
-
+                                                   data->cmd, data->msg_body,
+                                                   data->socket_id,
+                                                   data->ip, data->gate_name);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                ffscene->get_ffpython().call_lambda<void>(pFunc, data->cmd, data->msg_body,
+                                                          data->socket_id, data->ip, data->gate_name);
             }
             catch(exception& e_)
             {
@@ -473,10 +482,20 @@ ffslot_t::callback_t* ffscene_python_t::gen_enter_callback()
             static string func_name  = ENTER_CB_NAME;
             try
             {
+                /*I decide using below code to optimize 
                 ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name,
-                                               data->group_name,
-                                               data->gate_name, data->session_id,
-                                               data->from_scene, data->extra_data);
+                                                   data->group_name,
+                                                   data->gate_name, data->session_id,
+                                                   data->from_scene, data->extra_data);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                ffscene->get_ffpython().call_lambda<void>(pFunc, data->group_name, data->gate_name,
+                                                          data->session_id, data->from_scene, data->extra_data);
             }
             catch(exception& e_)
             {
@@ -505,8 +524,17 @@ ffslot_t::callback_t* ffscene_python_t::gen_offline_callback()
             static string func_name   = OFFLINE_CB_NAME;
             try
             {
+                /*I decide using below code to optimize 
                 ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name,
-                                               data->session_id);
+                                                   data->session_id);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                ffscene->get_ffpython().call_lambda<void>(pFunc, data->session_id);
             }
             catch(exception& e_)
             {
