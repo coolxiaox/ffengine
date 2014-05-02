@@ -564,8 +564,17 @@ ffslot_t::callback_t* ffscene_python_t::gen_logic_callback()
             PERF(ffscene->get_py_cmd2msg(data->cmd));
             try
             {
+                /*I decide using below code to optimize 
                 ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name,
                                                data->session_id, data->cmd, data->body);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                ffscene->get_ffpython().call_lambda<void>(pFunc, data->session_id, data->cmd, data->body);
             }
             catch(exception& e_)
             {
@@ -596,8 +605,17 @@ ffslot_t::callback_t* ffscene_python_t::gen_scene_call_callback()
             AUTO_CMD_PERF("scene_callback", data->cmd);
             try
             {
+                /*I decide using below code to optimize 
                 vector<string> ret = ffscene->get_ffpython().call<vector<string> >(ffscene->m_ext_name, func_name,
                                                                                 data->cmd, data->body);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                vector<string> ret = ffscene->get_ffpython().call_lambda<vector<string> >(pFunc, data->cmd, data->body);
                 if (ret.size() == 2)
                 {
                     data->msg_type = ret[0];
@@ -628,7 +646,16 @@ int ffscene_python_t::once_timer(int timeout_, uint64_t id_)
             PERF("once_timer");
             try
             {
+                /*I decide using below code to optimize 
                 ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name, id);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                ffscene->get_ffpython().call_lambda<void>(pFunc, id);
             }
             catch(exception& e_)
             {
@@ -668,8 +695,17 @@ ffslot_t::callback_t* ffscene_python_t::gen_db_query_callback(long callback_id_)
             static string func_name   = DB_QUERY_CB_NAME;
             try
             {
+                /*I decide using below code to optimize 
                 ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name,
                                                callback_id_, ok, ret_, col_);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = ffscene->get_ffpython().get_global_var<PyObject*>(ffscene->m_ext_name, func_name);
+                    ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                ffscene->get_ffpython().call_lambda<void>(pFunc, callback_id_, ok, ret_, col_);
             }
             catch(exception& e_)
             {
@@ -715,7 +751,17 @@ void ffscene_python_t::call_service(const string& name_space_, const string& ser
             static string func_name = CALL_SERVICE_RETURN_MSG_CB_NAME;
             try
             {
-                m_ffscene->get_ffpython().call<void>(m_ffscene->m_ext_name, func_name, m_callback_id, msg_data->body, msg_data->err_info);
+                /*
+                m_ffscene->get_ffpython().call<void>(m_ffscene->m_ext_name, func_name,
+                                                     m_callback_id, msg_data->body, msg_data->err_info);
+                */
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = m_ffscene->get_ffpython().get_global_var<PyObject*>(m_ffscene->m_ext_name, func_name);
+                    m_ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                m_ffscene->get_ffpython().call_lambda<void>(pFunc, m_callback_id, msg_data->body, msg_data->err_info);
             }
             catch(exception& e_)
             {
@@ -757,7 +803,14 @@ void ffscene_python_t::post_impl(const string& task_name, const ffjson_tool_t& t
     try
     {
         static string func_name = "process_task";
-        (*m_ffpython).call<void>(m_ext_name, func_name, task_name, task_args, from_name, callback_id);
+        //(*m_ffpython).call<void>(m_ext_name, func_name, task_name, task_args, from_name, callback_id);
+        static PyObject* pFunc = NULL;
+        if (pFunc == NULL)
+        {
+            pFunc = (*m_ffpython).get_global_var<PyObject*>(m_ext_name, func_name);
+            (*m_ffpython).cache_pyobject(pFunc);
+        }
+        (*m_ffpython).call_lambda<void>(pFunc, task_name, task_args, from_name, callback_id);
          
     }
     catch(exception& e_)
@@ -776,7 +829,14 @@ void ffscene_python_t::callback_impl(const ffjson_tool_t& task_args, long callba
     try
     {
         static string func_name = "process_task_callback";
-        (*m_ffpython).call<void>(m_ext_name, func_name, task_args, callback_id);
+        //(*m_ffpython).call<void>(m_ext_name, func_name, task_args, callback_id);
+        static PyObject* pFunc = NULL;
+        if (pFunc == NULL)
+        {
+            pFunc = (*m_ffpython).get_global_var<PyObject*>(m_ext_name, func_name);
+            (*m_ffpython).cache_pyobject(pFunc);
+        }
+        (*m_ffpython).call_lambda<void>(pFunc, task_args, callback_id);
          
     }
     catch(exception& e_)
@@ -806,7 +866,14 @@ void ffscene_python_t::reg_scene_interface(const string& name_)
                     key_id = (long)(m_ffscene->get_rpc().get_callback_id());
                     m_ffscene->m_cache_req[key_id] = *msg_data;
                 }
-                m_ffscene->get_ffpython().call<void>(m_ffscene->m_ext_name, func_name, m_name, msg_data->body, key_id);
+                //m_ffscene->get_ffpython().call<void>(m_ffscene->m_ext_name, func_name, m_name, msg_data->body, key_id);
+                static PyObject* pFunc = NULL;
+                if (pFunc == NULL)
+                {
+                    pFunc = m_ffscene->get_ffpython().get_global_var<PyObject*>(m_ffscene->m_ext_name, func_name);
+                    m_ffscene->get_ffpython().cache_pyobject(pFunc);
+                }
+                m_ffscene->get_ffpython().call_lambda<void>(pFunc, m_name, msg_data->body, key_id);
             }
             catch(exception& e_)
             {
