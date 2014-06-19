@@ -157,7 +157,7 @@ def process_enter(session, msg):
 Python：2.6 ~ 2.7
 
 1. 下载代码：
-    svn checkoout https://github.com/fanchy/FFRPC
+    svn checkoout https://github.com/fanchy/ffengine
 2. 编译
    cd bin
    make
