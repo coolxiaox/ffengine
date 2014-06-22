@@ -1185,7 +1185,19 @@ struct ffrpc_memory_route_t
         }
         return NULL;
     }
-
+    uint64_t get_broker_in_mem()
+    {
+        const node_info_map_t& tmp_data = m_node_info.get_data();
+        node_info_map_t::const_iterator it = tmp_data.begin();
+        for (; it != tmp_data.end(); ++it)
+        {
+            if (NULL != it->second.ffbroker)
+            {
+                return it->first;
+            }
+        }
+        return 0;
+    }
     safe_stl_t<node_info_map_t> m_node_info;
     mutex_t                     m_mutex;
 };
@@ -1199,17 +1211,19 @@ struct register_to_broker_t
     {
         void encode()
         {
-            encoder() << node_type << host << service_name << node_id << reg_namespace;
+            encoder() << node_type << host << service_name << node_id << reg_namespace << bind_broker_id;
         }
         void decode()
         {
-            decoder() >> node_type >> host  >> service_name >> node_id >> reg_namespace;
+            decoder() >> node_type >> host  >> service_name >> node_id >> reg_namespace >> bind_broker_id;
         }
         int32_t         node_type;//! 节点类型
         string          host;
         string          service_name;
         uint64_t        node_id;
         string          reg_namespace;//!如果需要注册到bridge broker,需要提供namespace名称
+        //!绑定的broker slave
+        uint64_t        bind_broker_id;
     };
     struct out_t: public ffmsg_t<in_t>
     {

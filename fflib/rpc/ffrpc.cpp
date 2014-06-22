@@ -26,10 +26,10 @@ ffrpc_t::~ffrpc_t()
 int ffrpc_t::open(arg_helper_t& arg_helper)
 {
     net_factory_t::start(1);
-    m_host = arg_helper.get_option_value("-broker");
+    m_host = arg_helper.get_option_value("-master_broker");
     if (m_host.empty())
     {
-        m_host = arg_helper.get_option_value("-master_broker");
+        m_host = arg_helper.get_option_value("-broker");
     }
 
     m_thread.create_thread(task_binder_t::gen(&task_queue_t::run, &m_tq), 1);
@@ -100,7 +100,10 @@ socket_ptr_t ffrpc_t::connect_to_broker(const string& host_, uint32_t node_id_)
     reg_msg.node_type = RPC_NODE;
     reg_msg.service_name = m_service_name;
     reg_msg.node_id = m_node_id;
+    reg_msg.bind_broker_id = singleton_t<ffrpc_memory_route_t>::instance().get_broker_in_mem();
     msg_sender_t::send(sock, REGISTER_TO_BROKER_REQ, reg_msg);
+    
+    LOGINFO((FFRPC, "ffrpc_t::connect_to_broker end bind_broker_id=%d", reg_msg.bind_broker_id));
     return sock;
 }
 //! 投递到ffrpc 特定的线程

@@ -68,12 +68,23 @@ int ffbroker_t::open(arg_helper_t& arg)
         {
             return -1;
         }
+        for (int i = 0; i < 300; ++i)
+        {
+            if (m_node_id != 0)
+            {
+                break;
+            }            
+            usleep(10);
+        }
+        if (m_node_id == 0)
+            return -1;
         //! 注册到master broker
     }
     else//! 内存中注册此broker
     {
         singleton_t<ffrpc_memory_route_t>::instance().add_node(BROKER_MASTER_NODE_ID, this);
     }
+    LOGINFO((BROKER, "ffbroker_t::open end ok m_node_id=%d", m_node_id));
     return 0;
 }
 
@@ -258,7 +269,12 @@ int ffbroker_t::handle_regiter_to_broker(register_to_broker_t::in_t& msg_, socke
         sock_->set_data(psession);
 
         m_all_registered_info.node_sockets[node_id] = sock_;
-
+        if  (0 != msg_.bind_broker_id)
+        {
+            LOGINFO((BROKER, "ffbroker_t::handle_regiter_to_broker service<%s> bind_broker_id=%u exist",
+                                msg_.service_name, msg_.bind_broker_id));
+            m_all_registered_info.broker_data.rpc_bind_broker_info[node_id] = msg_.bind_broker_id;
+        }
         if (msg_.service_name.empty() == false)
         {
             psession->service_name = msg_.service_name;
@@ -302,7 +318,8 @@ int ffbroker_t::sync_node_info(register_to_broker_t::out_t& ret_msg, socket_ptr_
         session_data_t* psession = it->second->get_data<session_data_t>();
         if (RPC_NODE == psession->get_type())//!如果没有分配对应的slavebroker，那么分配一个
         {
-            map<uint64_t, uint64_t>::iterator it_id = m_all_registered_info.broker_data.rpc_bind_broker_info.find(psession->get_node_id());
+            map<uint64_t, uint64_t>::iterator it_id = m_all_registered_info.broker_data.rpc_bind_broker_info.find(
+                                                        psession->get_node_id());
             if (it_id == m_all_registered_info.broker_data.rpc_bind_broker_info.end() ||
                 m_all_registered_info.node_sockets.find(it_id->first) == m_all_registered_info.node_sockets.end())
             {
