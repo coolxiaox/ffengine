@@ -646,9 +646,6 @@ int ffscene_python_t::once_timer(int timeout_, uint64_t id_)
             PERF("once_timer");
             try
             {
-                /*I decide using below code to optimize 
-                ffscene->get_ffpython().call<void>(ffscene->m_ext_name, func_name, id);
-                */
                 static PyObject* pFunc = NULL;
                 if (pFunc == NULL)
                 {
@@ -664,7 +661,8 @@ int ffscene_python_t::once_timer(int timeout_, uint64_t id_)
         }
         static void callback(ffscene_python_t* ffscene, task_queue_t* tq_, uint64_t id)
         {
-            tq_->produce(task_binder_t::gen(&lambda_cb::call_py, ffscene, id));
+            //tq_->produce(task_binder_t::gen(&lambda_cb::call_py, ffscene, id));
+            lambda_cb::call_py(ffscene, id);
         }
     };
     LOGDEBUG((FFSCENE_PYTHON, "ffscene_python_t::once_timer begin id<%u>", id_));

@@ -206,6 +206,7 @@ class session_t:
         else:
             kf_send_msg_session(self.group_name, self.gate_name, self.socket_id, cmd, ret_msg)
     def broadcast(self, cmd, ret_msg):
+        ret_msg = encode_msg(ret_msg)
         def cb(tmp_session):
             tmp_session.send_msg(cmd, ret_msg)
         g_session_mgr.foreach(cb)
@@ -350,7 +351,9 @@ def to_str(msg):
         return json.dumps(msg, ensure_ascii=False)
 
 def send_msg_session(gate_name, session_id, cmd_, body):
-    return ff.py_send_msg_session(gate_name, session_id, cmd_, to_str(body))
+    if str != body.__class__:
+        body = encode_msg(body)
+    return ff.py_send_msg_session(gate_name, session_id, cmd_, body)
 def kf_send_msg_session(group_name, gate_name, session_id, cmd_, body):
     return ff.py_kf_send_msg_session(group_name, gate_name, session_id, cmd_, to_str(body))
 

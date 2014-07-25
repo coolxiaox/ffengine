@@ -11,7 +11,8 @@ ffbroker_t::ffbroker_t():
     m_acceptor(NULL),
     m_for_alloc_id(0),
     m_node_id(0),
-    m_master_broker_sock(NULL)
+    m_master_broker_sock(NULL),
+    m_timer(&m_tq)
 {
 }
 ffbroker_t::~ffbroker_t()

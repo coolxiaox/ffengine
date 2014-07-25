@@ -13,6 +13,7 @@ ffrpc_t::ffrpc_t(string service_name_):
     m_service_name(service_name_),
     m_node_id(0),
     m_callback_id(0),
+    m_timer(&m_tq),
     m_master_broker_sock(NULL),
     m_bind_broker_id(0)
 {

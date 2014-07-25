@@ -104,12 +104,12 @@ public:
     bool                                    m_runing;
 private:
     string                                  m_host;
-    timer_service_t                         m_timer;
     string                                  m_service_name;//! 注册的服务名称
     uint64_t                                m_node_id;     //! 通过注册broker，分配的node id
     
     uint32_t                                m_callback_id;//! 回调函数的唯一id值
     task_queue_t                            m_tq;
+    timer_service_t                         m_timer;
     thread_t                                m_thread;
     ffslot_t                                m_ffslot;//! 注册broker 消息的回调函数
     ffslot_t                                m_ffslot_interface;//! 通过reg 注册的接口会暂时的存放在这里

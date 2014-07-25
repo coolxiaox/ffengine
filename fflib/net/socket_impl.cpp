@@ -11,6 +11,7 @@
 #include "base/lock.h"
 #include "base/task_queue_i.h"
 
+
 using namespace ff;
 
 socket_impl_t::socket_impl_t(epoll_i* e_, socket_controller_i* seh_, int fd_, task_queue_i* tq_):
@@ -23,6 +24,11 @@ socket_impl_t::socket_impl_t(epoll_i* e_, socket_controller_i* seh_, int fd_, ta
 
 socket_impl_t::~socket_impl_t()
 {
+    for (send_buffer_t::iterator it = m_send_buffer.begin(); it != m_send_buffer.end(); ++it)
+    {
+        (*it)->release();
+    }
+    m_send_buffer.clear();
     delete m_sc;
 }
 
@@ -113,7 +119,6 @@ int socket_impl_t::handle_epoll_write()
 int socket_impl_t::handle_epoll_write_impl()
 {
     int ret = 0;
-    string left_buff;
 
     if (false == is_open() || true == m_send_buffer.empty())
     {
@@ -122,8 +127,8 @@ int socket_impl_t::handle_epoll_write_impl()
 
     do
     {
-        const string& msg = m_send_buffer.front();
-        ret = do_send(msg, left_buff);
+        ff_buffer_t* pbuff = m_send_buffer.front();
+        ret = do_send(pbuff);
 
         if (ret < 0)
         {
@@ -132,8 +137,6 @@ int socket_impl_t::handle_epoll_write_impl()
         }
         else if (ret > 0)
         {
-            m_send_buffer.pop_front();
-            m_send_buffer.push_front(left_buff);
             return 0;
         }
         else
@@ -148,13 +151,21 @@ int socket_impl_t::handle_epoll_write_impl()
 
 void socket_impl_t::async_send(const string& msg_)
 {
-    m_tq->produce(task_binder_t::gen(&socket_impl_t::send_impl, this, msg_));
+    m_tq->produce(task_binder_t::gen(&socket_impl_t::send_str_impl, this, msg_));
+}
+void socket_impl_t::async_send(ff_buffer_t* buff_)
+{
+    m_tq->produce(task_binder_t::gen(&socket_impl_t::send_impl, this, buff_));
+}
+void socket_impl_t::send_str_impl(const string& buff_)
+{
+    ff_str_buffer_t* p = m_buff_pool.alloc();
+    p->assign(buff_, &m_buff_pool);
+    this->send_impl(p);
 }
 
-void socket_impl_t::send_impl(const string& src_buff_)
+void socket_impl_t::send_impl(ff_buffer_t* buff_)
 {
-    string buff_ = src_buff_;
-
     if (false == is_open() || m_sc->check_pre_send(this, buff_))
     {
         return;
@@ -166,28 +177,28 @@ void socket_impl_t::send_impl(const string& src_buff_)
         return;
     }
 
-    string left_buff;
-    int ret = do_send(buff_, left_buff);
+    int ret = do_send(buff_);
 
     if (ret < 0)
     {
         this ->close();
     }
-    else if (ret > 0)
+    else if (ret > 0)//!left some data
     {
-        m_send_buffer.push_back(left_buff);
+        m_send_buffer.push_back(buff_);
     }
     else
     {
+        buff_->release();
         //! send ok
         m_sc->handle_write_completed(this);
     }
 }
 
-int socket_impl_t::do_send(const string& buff_, string& left_buff_)
+int socket_impl_t::do_send(ff_buffer_t* buff_)
 {
-    size_t nleft             = buff_.size();
-    const char* buffer       = buff_.data();
+    size_t nleft             = (size_t)(buff_->left_size());
+    const char* buffer       = buff_->cur_data();
     ssize_t nwritten;
 
     while(nleft > 0)
@@ -200,7 +211,6 @@ int socket_impl_t::do_send(const string& buff_, string& left_buff_)
             }
             else if (EWOULDBLOCK == errno)
             {
-                left_buff_.assign(buff_.c_str() + (buff_.size() - nleft), nleft);
                 return 1;
             }
             else
@@ -212,6 +222,7 @@ int socket_impl_t::do_send(const string& buff_, string& left_buff_)
 
         nleft    -= nwritten;
         buffer   += nwritten;
+        buff_->consume(nwritten);
     }
 
     return 0;

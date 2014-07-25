@@ -36,7 +36,7 @@ int performance_daemon_t::start(const string& path_, int seconds_)
     m_timeout_sec = seconds_;
     
     //! 启动定时器 1 times/seconds
-    m_timer_service = new timer_service_t(1000);
+    m_timer_service = new timer_service_t(NULL, 1000);
     
     m_started = true; //! timer will start
     

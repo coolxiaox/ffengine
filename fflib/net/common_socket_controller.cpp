@@ -69,7 +69,7 @@ int common_socket_controller_t::handle_write_completed(socket_i* sp_)
     return 0;
 }
 
-int common_socket_controller_t::check_pre_send(socket_i* sp_, string& buff_)
+int common_socket_controller_t::check_pre_send(socket_i* sp_, ff_buffer_t* buff_)
 {
     if (sp_->socket() < 0)
     {

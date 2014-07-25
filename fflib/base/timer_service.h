@@ -16,6 +16,7 @@ using namespace std;
 
 #include "base/thread.h"
 #include "base/lock.h"
+#include "base/task_queue_i.h"
 
 namespace ff {
 
@@ -48,13 +49,14 @@ class timer_service_t
         bool is_timeout(uint64_t cur_ms_)       { return dest_tm <= cur_ms_; }
         uint64_t    timeout;
         uint64_t    dest_tm;
-        task_t  callback;
-        bool    is_loop;
+        task_t      callback;
+        bool        is_loop;
     };
     typedef list<registered_info_t>             registered_info_list_t;
     typedef multimap<long, registered_info_t>   registered_info_map_t;
 public:
-    timer_service_t(long tick = 100):
+    timer_service_t(task_queue_i* tq_ = NULL, long tick = 100):
+        m_tq(tq_),
         m_runing(true),
         m_efd(-1),
         m_min_timeout(tick),
@@ -91,7 +93,7 @@ public:
     {
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        uint64_t   dest_ms = tv.tv_sec*1000 + tv.tv_usec / 1000 + ms_;
+        uint64_t   dest_ms = uint64_t(tv.tv_sec)*1000 + tv.tv_usec / 1000 + ms_;
 
         lock_guard_t lock(m_mutex);
         m_tmp_register_list.push_back(registered_info_t(ms_, dest_ms, func, true));
@@ -100,7 +102,7 @@ public:
     {
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        uint64_t   dest_ms = tv.tv_sec*1000 + tv.tv_usec / 1000 + ms_;
+        uint64_t   dest_ms = uint64_t(tv.tv_sec)*1000 + tv.tv_usec / 1000 + ms_;
         
         lock_guard_t lock(m_mutex);
         m_tmp_register_list.push_back(registered_info_t(ms_, dest_ms, func, false));
@@ -166,7 +168,14 @@ private:
             {
                 break;
             }
-            last.callback.run();
+            
+            if (m_tq){
+                m_tq->produce(last.callback); //! 投递到目标线程执行
+            }
+            else{
+                last.callback.run();
+            }
+            
             if (last.is_loop)//! 如果是循环定时器，还要重新加入到定时器队列中
             {
                 loop_timer(last.timeout, last.callback);
@@ -180,6 +189,7 @@ private:
     }
 
 private:
+    task_queue_i*            m_tq;
     volatile bool            m_runing;
     int                      m_efd;
     volatile long            m_min_timeout;

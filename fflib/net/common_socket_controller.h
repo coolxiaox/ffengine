@@ -21,7 +21,7 @@ public:
     virtual int handle_read(socket_i*, char* buff, size_t len);
     virtual int handle_write_completed(socket_i*);
 
-    virtual int check_pre_send(socket_i*, string& buff_);
+    virtual int check_pre_send(socket_i*, ff_buffer_t*);
 
 protected:
     msg_handler_ptr_t   m_msg_handler;
