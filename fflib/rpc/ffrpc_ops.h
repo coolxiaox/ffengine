@@ -18,6 +18,9 @@ using namespace std;
 
 #include <thrift/FFThrift.h>
 
+#include "rpc/msg_def/ffrpc_msg_types.h"
+#include "rpc/msg_def/ffrpc_msg_constants.h"
+
 namespace apache
 {
     namespace thrift{
@@ -802,276 +805,64 @@ enum ffrpc_cmd_def_e
 //! gate 验证client的sessionid的消息
 struct session_verify_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_key << online_time << ip << gate_name;
-        }
-        void decode()
-        {
-            decoder() >> session_key >> online_time >> ip >> gate_name;
-        }
-        string      session_key;//! 包含用户id、密码等
-        int64_t     online_time;
-        string      ip;
-        string      gate_name;
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder() << session_id << err << extra_data;
-        }
-        void decode()
-        {
-            decoder() >> session_id >> err >> extra_data;
-        }
-        userid_t session_id;//! 分配的sessionid
-        string err;//! 错误信息
-        //! 需要额外的返回给client的消息内容
-        string          extra_data;
-    };
+    typedef session_verify_in_t  in_t;
+    typedef session_verify_out_t out_t;
 };
 
 //!session 第一次进入
 struct session_first_entere_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << cmd << socket_id << msg_body << ip << gate_name;
-        }
-        void decode()
-        {
-            decoder() >> cmd >> socket_id >> msg_body >> ip >> gate_name;
-        }
-        uint16_t    cmd;
-        userid_t    socket_id;//! 包含用户id
-        string      msg_body;
-        string      ip;
-        string      gate_name;
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder() << uid;
-        }
-        void decode()
-        {
-            decoder() >> uid;
-        }
-        userid_t    uid;//! 包含用户id
-    };
+    typedef session_first_entere_in_t  in_t;
+    typedef session_first_entere_out_t out_t;
 };
 //! gate session 进入场景服务器消息
 struct session_enter_scene_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_id << from_group << from_gate << from_scene << to_scene << extra_data;
-        }
-        void decode()
-        {
-            decoder() >> session_id >> from_group >> from_gate >> from_scene >> to_scene >> extra_data;
-        }
-        userid_t    session_id;//! 包含用户id
-        string    from_group;//! 来自区组
-        string    from_gate;
-        string    from_scene;//! 从哪个scene跳转过来,若是第一次上线，from_scene为空
-        string    to_scene;//! 跳到哪个scene上面去,若是下线，to_scene为空
-        string    extra_data;//! 附带数据
-        
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef session_enter_scene_in_t  in_t;
+    typedef session_enter_scene_out_t out_t;
+    
 };
 //! gate session 下线
 struct session_offline_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_id;
-        }
-        void decode()
-        {
-            decoder() >> session_id;
-        }
-        userid_t    session_id;//! 包含用户id
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef session_offline_in_t  in_t;
+    typedef session_offline_out_t out_t;
+    
 };
 
 //! gate 转发client的消息
 struct route_logic_msg_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_id << cmd << body;
-        }
-        void decode()
-        {
-            decoder() >> session_id >> cmd >> body;
-        }
-        userid_t session_id;//! 包含用户id
-        uint16_t cmd;
-        string body;
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef route_logic_msg_in_t  in_t;
+    typedef route_logic_msg_out_t out_t;
 };
 //! 改变gate 中client 对应的logic节点
 struct gate_change_logic_node_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_id << alloc_logic_service << cur_group_name << dest_group_name << extra_data;
-        }
-        void decode()
-        {
-            decoder() >> session_id >> alloc_logic_service >> cur_group_name >> dest_group_name >> extra_data;
-        }
-        userid_t session_id;//! 包含用户id
-        string alloc_logic_service;//! 分配的logic service
-        //!区组名称
-        string cur_group_name;
-        string dest_group_name;
-        string extra_data;
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef gate_change_logic_node_in_t  in_t;
+    typedef gate_change_logic_node_out_t out_t;
+    
 };
 
 //! 关闭gate中的某个session
 struct gate_close_session_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_id;
-        }
-        void decode()
-        {
-            decoder() >> session_id;
-        }
-        userid_t session_id;//! 包含用户id
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef gate_close_session_in_t  in_t;
+    typedef gate_close_session_out_t out_t;
+    
 };
 //! 转发消息给client
 struct gate_route_msg_to_session_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << session_id << cmd << body;
-        }
-        void decode()
-        {
-            decoder() >> session_id >> cmd >> body;
-        }
-        vector<userid_t>  session_id;//! 包含用户id
-        uint16_t        cmd;
-        string          body;//! 数据
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef gate_route_msg_to_session_in_t  in_t;
+    typedef gate_route_msg_to_session_out_t out_t;
+    
 };
 //! 转发消息给所有client
 struct gate_broadcast_msg_to_session_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << cmd << body;
-        }
-        void decode()
-        {
-            decoder() >> cmd >> body;
-        }
-        uint16_t        cmd;
-        string          body;//! 数据
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder();
-        }
-        void decode()
-        {
-            decoder();
-        }
-    };
+    typedef gate_broadcast_msg_to_session_in_t  in_t;
+    typedef gate_broadcast_msg_to_session_out_t out_t
 };
 
 
@@ -1079,33 +870,8 @@ struct gate_broadcast_msg_to_session_t
 
 struct scene_call_msg_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << cmd << body;
-        }
-        void decode()
-        {
-            decoder() >> cmd >> body;
-        }
-        uint16_t        cmd;
-        string          body;//! 数据
-    };
-    struct out_t: public ffmsg_t<out_t>
-    {
-        void encode()
-        {
-            encoder() << err << msg_type << body;
-        }
-        void decode()
-        {
-            decoder() >> err >> msg_type >> body;
-        }
-        string err;
-        string msg_type;
-        string body;
-    };
+    typedef scene_call_msg_in_t  in_t;
+    typedef scene_call_msg_out_t out_t;
 };
 
 
@@ -1207,74 +973,13 @@ struct ffrpc_memory_route_t
 //! 处理其他broker或者client注册到此server
 struct register_to_broker_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << node_type << host << service_name << node_id << reg_namespace << bind_broker_id;
-        }
-        void decode()
-        {
-            decoder() >> node_type >> host  >> service_name >> node_id >> reg_namespace >> bind_broker_id;
-        }
-        int32_t         node_type;//! 节点类型
-        string          host;
-        string          service_name;
-        uint64_t        node_id;
-        string          reg_namespace;//!如果需要注册到bridge broker,需要提供namespace名称
-        //!绑定的broker slave
-        uint64_t        bind_broker_id;
-    };
-    struct out_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << register_flag << node_id << service2node_id << slave_broker_data << rpc_bind_broker_info << reg_namespace_list;
-        }
-        void decode()
-        {
-            decoder()>> register_flag >> node_id >> service2node_id >> slave_broker_data >> rpc_bind_broker_info >> reg_namespace_list;
-        }
-        int8_t                        register_flag;//! -1表示注册失败，0表示同步消息，1表示注册成功
-        uint64_t                      node_id;
-        map<string, uint64_t>         service2node_id;
-        map<string/*host*/, uint64_t> slave_broker_data;//!slave broker对应的数据
-        //!记录各个rpc节点绑定的slave broker,如果没有slave broker,绑定master broker
-        map<uint64_t, uint64_t>       rpc_bind_broker_info;
-        //! bridge 上已经注册的各个namespace
-        vector<string>                reg_namespace_list;
-    };
+    typedef register_to_broker_in_t  in_t;
+    typedef register_to_broker_out_t out_t;
 };
 //! 处理转发消息的操作
 struct broker_route_msg_t
 {
-    struct in_t: public ffmsg_t<in_t>
-    {
-        void encode()
-        {
-            encoder() << dest_namespace << dest_service_name << dest_msg_name << dest_node_id
-                      << from_namespace << from_node_id
-                      << callback_id << body << err_info;
-        }
-        void decode()
-        {
-            decoder() >> dest_namespace >> dest_service_name >> dest_msg_name >> dest_node_id
-                      >> from_namespace >> from_node_id
-                      >> callback_id >> body >> err_info;
-        }
-        
-        string      dest_namespace;
-        string      dest_service_name;
-        string      dest_msg_name;
-        uint64_t    dest_node_id;
-        
-        string      from_namespace;
-        uint64_t    from_node_id;
-        
-        int64_t     callback_id;
-        string      body;
-        string      err_info;
-    };
+    typedef broker_route_msg_in_t in_t;
 };
 
 

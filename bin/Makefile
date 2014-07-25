@@ -21,7 +21,7 @@ ARCH=
 BIN=app_game
 
 #源文件目录
-SrcDir= . ../fflib/base ../fflib/net ../fflib/rpc ../fflib/db ../fflib/xml ../fflib/server
+SrcDir= . ../fflib/base ../fflib/net ../fflib/rpc ../fflib/rpc/msg_def ../fflib/db ../fflib/xml ../fflib/server
 #头文件目录
 IncDir=  ../fflib/  ../lib3party /usr/include/python2.7/ /usr/include/python2.6/
 #连接库目录

@@ -102,7 +102,7 @@ socket_ptr_t ffrpc_t::connect_to_broker(const string& host_, uint32_t node_id_)
     reg_msg.service_name = m_service_name;
     reg_msg.node_id = m_node_id;
     reg_msg.bind_broker_id = singleton_t<ffrpc_memory_route_t>::instance().get_broker_in_mem();
-    msg_sender_t::send(sock, REGISTER_TO_BROKER_REQ, reg_msg);
+    msg_sender_t::send(sock, REGISTER_TO_BROKER_REQ, ffthrift_t::EncodeAsString(reg_msg));
     
     LOGINFO((FFRPC, "ffrpc_t::connect_to_broker end bind_broker_id=%d", reg_msg.bind_broker_id));
     return sock;
@@ -136,7 +136,7 @@ void ffrpc_t::timer_reconnect_broker()
         }
     }
     //!检测是否需要连接slave broker
-    map<string/*host*/, uint64_t>::iterator it = m_broker_data.slave_broker_data.begin();
+    map<string/*host*/, int64_t>::iterator it = m_broker_data.slave_broker_data.begin();
     for (; it != m_broker_data.slave_broker_data.end(); ++it)
     {
         uint64_t node_id = it->second;
@@ -273,7 +273,7 @@ int ffrpc_t::handle_rpc_call_msg(broker_route_msg_t::in_t& msg_, socket_ptr_t so
             msg_.err_info = "interface named " + msg_.dest_msg_name + " not found in rpc";
             msg_.dest_node_id = msg_.from_node_id;
             msg_.dest_service_name.clear();
-            msg_sender_t::send(sock_, BROKER_ROUTE_MSG, msg_);
+            msg_sender_t::send(sock_, BROKER_ROUTE_MSG, ffthrift_t::EncodeAsString(msg_));
         }
     }
     else
@@ -300,7 +300,7 @@ int ffrpc_t::call_impl(const string& service_name_, const string& msg_name_, con
     //!调用远程消息
     LOGTRACE((FFRPC, "ffrpc_t::call_impl begin service_name_<%s>, msg_name_<%s> body_size=%u", service_name_.c_str(), msg_name_.c_str(), body_.size()));
     
-    map<string, uint64_t>::iterator it = m_broker_data.service2node_id.find(service_name_);
+    map<string, int64_t>::iterator it = m_broker_data.service2node_id.find(service_name_);
     if (it == m_broker_data.service2node_id.end())
     {
         LOGWARN((FFRPC, "ffrpc_t::call_impl end service not exist=%s", service_name_));
@@ -359,11 +359,11 @@ void ffrpc_t::send_to_dest_node(const string& dest_namespace_, const string& ser
     }
     else if (dest_broker_id == 0)
     {
-        msg_sender_t::send(m_master_broker_sock, BROKER_ROUTE_MSG, dest_msg);
+        msg_sender_t::send(m_master_broker_sock, BROKER_ROUTE_MSG, ffthrift_t::EncodeAsString(dest_msg));
     }
     else
     {
-        msg_sender_t::send(m_broker_sockets[m_bind_broker_id], BROKER_ROUTE_MSG, dest_msg);
+        msg_sender_t::send(m_broker_sockets[m_bind_broker_id], BROKER_ROUTE_MSG, ffthrift_t::EncodeAsString(dest_msg));
     }
     return;
 }
