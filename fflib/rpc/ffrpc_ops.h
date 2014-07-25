@@ -862,7 +862,7 @@ struct gate_route_msg_to_session_t
 struct gate_broadcast_msg_to_session_t
 {
     typedef gate_broadcast_msg_to_session_in_t  in_t;
-    typedef gate_broadcast_msg_to_session_out_t out_t
+    typedef gate_broadcast_msg_to_session_out_t out_t;
 };
 
 

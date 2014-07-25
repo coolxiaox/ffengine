@@ -7,6 +7,7 @@ import thrift.protocol.TBinaryProtocol as TBinaryProtocol
 import thrift.protocol.TCompactProtocol as TCompactProtocol
 import thrift.protocol.TJSONProtocol as TJSONProtocol
 import thrift.transport.TTransport as TTransport
+import thrift.msg_def.ttypes as ffrpc_msg_def
 
 from gen_py.echo import ttypes
 
@@ -89,30 +90,23 @@ class ffrpc_t:
 			tcpCliSock.settimeout(self.timeout)
 		cmd  = 5
 		dest_msg_body = encode_msg(req_msg)
-		body  = ''
-		#string      dest_namespace;
-		body += struct.pack("!i", 0)
-		#string      dest_service_name;
-		body += struct.pack("!i", len(service_name)) + service_name
-		#string      dest_msg_name;
 		dest_msg_name = namespace_ + req_msg.__class__.__name__
-		#debub print('dest_msg_name', dest_msg_name)
-		body += struct.pack("!i", len(dest_msg_name)) + dest_msg_name
-		#uint64_t    dest_node_id;
-		body += struct.pack("!i", 0) + struct.pack("!i", 0)
-		#string      from_namespace;
-		body += struct.pack("!i", 0)
-		#uint64_t    from_node_id;
-		body += struct.pack("!i", 0) + struct.pack("!i", 0)
-		#int64_t     callback_id;
-		body += struct.pack("!i", 0) + struct.pack("!i", 0)
-		#string      body;
-		body += struct.pack("!i", len(dest_msg_body)) + dest_msg_body
-		#string      err_info;
-		body += struct.pack("!i", 0)
-
-		head = struct.pack("!IHH", len(body), cmd, 0)
-		data = head + body
+		
+		ffmsg = ffrpc_msg_def.broker_route_msg_in_t()
+		ffmsg.dest_namespace    = namespace_
+		ffmsg.dest_service_name = service_name
+		ffmsg.dest_msg_name     = dest_msg_name
+		ffmsg.dest_node_id      = 0
+		ffmsg.from_namespace    = ''
+		ffmsg.from_node_id      = 0
+		ffmsg.callback_id       = 0
+		ffmsg.body              = dest_msg_body
+		print('dest_msg_body', len(dest_msg_body))
+		ffmsg.err_info          = ''
+		
+		body  = encode_msg(ffmsg)
+		head  = struct.pack("!IHH", len(body), cmd, 0)
+		data  = head + body
 
 		#debub print('data len=%d, body_len=%d'%(len(data), len(body)))
 		tcpCliSock.send(data)
@@ -132,7 +126,7 @@ class ffrpc_t:
 			head_parse = struct.unpack('!IHH', head_recv)
 			
 			body_len   = head_parse[0]
-			#debub print('recv head end body_len=%d, head=%d'%(body_len, len(head_recv)))
+			#print('recv head end body_len=%d, head=%d'%(body_len, len(head_recv)))
 			#开始读取body
 			while len(body_recv) < body_len:
 				tmp_data = tcpCliSock.recv(body_len - len(body_recv))
@@ -142,31 +136,12 @@ class ffrpc_t:
 					return False
 				body_recv += tmp_data
 			#解析body
-			#debub print('recv head_parse', head_parse, 'body_recv', len(body_recv))
-			#string      dest_service_name;
-			dest_service_name_len_data = body_recv[4:8]
-			dest_service_name_len      = struct.unpack("!I", dest_service_name_len_data)[0]
-			dest_msg_name_field = body_recv[8 + dest_service_name_len: dest_service_name_len + 12] #从dest_msg_name开始
-			dest_msg_name_len   = struct.unpack("!I", dest_msg_name_field)[0]
-			dest_msg_name_str   = ''
-			body_field_len_ddata= ''
-			if dest_msg_name_len > 0:
-				dest_msg_name_str = body_recv[dest_service_name_len + 12:dest_service_name_len + 12 + dest_msg_name_len]
-				body_field_len_ddata    = body_recv[dest_service_name_len + 12 + dest_msg_name_len+28: dest_service_name_len + 12 + dest_msg_name_len + 28 + 4]
+			recv_msg = ffrpc_msg_def.broker_route_msg_in_t()
+			decode_msg(recv_msg, body_recv)
+			if recv_msg.err_info != None and recv_msg.err_info != '':
+			    self.err_info = recv_msg.err_info
 			else:
-				body_field_len_ddata    = body_recv[dest_service_name_len + 12+28:dest_service_name_len + 12+ 28 + 4]
-			#debub print('11111111111111111111', dest_msg_name_len, len(body_field_len_ddata))
-			body_field_len = struct.unpack("!I", body_field_len_ddata)[0]
-			
-			body_field_data = ''
-			#debub print('11111111111111111111 222222222')
-			if body_field_len > 0:
-				body_field_data= body_recv[dest_service_name_len + 12 + dest_msg_name_len+28 + 4: dest_service_name_len + 12 + dest_msg_name_len + 28 + 4 + body_field_len]
-			#debub print('dest_msg_name_str', dest_msg_name_str, 'body_field_len', body_field_len)
-			
-			decode_msg(ret_msg, body_field_data)
-			#debub print('body_field_data len=%d' % len(body_field_data), ret_msg)
-			self.err_info = body_recv[dest_service_name_len + 12 + dest_msg_name_len + 28 + 4 + body_field_len + 4:]
+			    decode_msg(ret_msg, recv_msg.body)
 		except Exception as e:
 			self.err_info = 'call failed:'+str(e)
 		except:
@@ -180,12 +155,13 @@ class ffrpc_t:
 
 
 if __name__ == '__main__':
-	HOST = '127.0.0.1'
-	PORT = 10246
-	ffc = ffrpc_t(HOST, PORT, 1.5)
 
-	req = ttypes.echo_thrift_in_t('ohNice')
-	ret = ttypes.echo_thrift_out_t()
-	ffc.call('echo', req, ret, 'ff')
-
-	print('error_info = %s' %(ffc.error_msg()), ret)
+    HOST = '127.0.0.1'
+    PORT = 40241
+    ffc = ffrpc_t(HOST, PORT, 15)
+    
+    req = ttypes.echo_thrift_in_t('ohNice')
+    ret = ttypes.echo_thrift_out_t()
+    ffc.call('scene@0', req, ret)
+    
+    print('error_info = %s' %(ffc.error_msg()), ret)

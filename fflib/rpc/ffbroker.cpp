@@ -455,7 +455,8 @@ int ffbroker_t::process_sync_client_req(broker_route_msg_t::in_t& msg_, socket_p
     msg_.callback_id  = msg_.from_node_id;
     //!如果找到对应的节点，那么发给对应的节点
     send_to_rpc_node(msg_);
-    LOGTRACE((BROKER, "ffbroker_t::process_sync_client_req end ok from_node_id=%u", msg_.from_node_id));
+    LOGTRACE((BROKER, "ffbroker_t::process_sync_client_req end ok service=%s from_node_id=%u",
+              msg_.dest_service_name, msg_.from_node_id));
     return 0;
 }
 
