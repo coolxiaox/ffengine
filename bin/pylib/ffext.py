@@ -594,7 +594,7 @@ def ff_call_scene_interface(name, body, callback_id):
     if None == func:
         print('dest name=%s not found'%(name))
         return
-    print('ff_call_scene_interface body_len=%d'%(len(body)))
+    #print('ff_call_scene_interface body_len=%d'%(len(body)))
     func(body, callback_id)
     
 #调用外部的接口 

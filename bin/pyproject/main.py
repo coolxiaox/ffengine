@@ -20,7 +20,10 @@ def cleanup():
 
 @ffext.ff_reg_scene_interfacee(ttypes.echo_thrift_in_t, ttypes.echo_thrift_out_t)
 def test_echo(req):
-    ret_msg = ttypes.echo_thrift_out_t(req.msg.data)
+    
+    ret_msg = ttypes.echo_thrift_out_t()
+    ret_msg.data = req.msg.data
     req.response(ret_msg)
+    print('test_echo', req.msg, ret_msg)
     return
 

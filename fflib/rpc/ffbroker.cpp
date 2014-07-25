@@ -468,7 +468,8 @@ int ffbroker_t::send_to_rpc_node(broker_route_msg_t::in_t& msg_)
     if (msg_.dest_namespace.empty() == false)
     {
         msg_.from_namespace = m_namespace;
-        LOGTRACE((BROKER, "ffbroker_t::send_to_rpc_node post to bridge dest_namespace=%s", msg_.dest_namespace));
+        LOGTRACE((BROKER, "ffbroker_t::send_to_rpc_node post to bridge dest_namespace=%s bodylen=%d",
+                            msg_.dest_namespace, msg_.body.size()));
         set<socket_ptr_t>& bridge_socket = m_namespace2bridge[msg_.dest_namespace];
         if (bridge_socket.empty())
         {
@@ -495,7 +496,7 @@ int ffbroker_t::send_to_rpc_node(broker_route_msg_t::in_t& msg_)
         pffrpc->get_tq().produce(task_binder_t::gen(&ffrpc_t::handle_rpc_call_msg, pffrpc, msg_, socket_ptr_t(NULL)));
         return 0;
     }
-    LOGINFO((BROKER, "ffbroker_t::send_to_rpc_node dest_node=%d by socket", msg_.dest_node_id));
+    LOGINFO((BROKER, "ffbroker_t::send_to_rpc_node dest_node=%d bodylen=%d, by socket", msg_.dest_node_id, msg_.body.size()));
     map<uint64_t/* node id*/, socket_ptr_t>::iterator it = m_all_registered_info.node_sockets.find(msg_.dest_node_id);
     if (it != m_all_registered_info.node_sockets.end())
     {

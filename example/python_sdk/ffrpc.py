@@ -101,7 +101,7 @@ class ffrpc_t:
 		ffmsg.from_node_id      = 0
 		ffmsg.callback_id       = 0
 		ffmsg.body              = dest_msg_body
-		print('dest_msg_body', len(dest_msg_body))
+		#print('dest_msg_body', len(dest_msg_body))
 		ffmsg.err_info          = ''
 		
 		body  = encode_msg(ffmsg)
@@ -141,6 +141,7 @@ class ffrpc_t:
 			if recv_msg.err_info != None and recv_msg.err_info != '':
 			    self.err_info = recv_msg.err_info
 			else:
+			    #print('recv_msg.body', len(recv_msg.body))
 			    decode_msg(ret_msg, recv_msg.body)
 		except Exception as e:
 			self.err_info = 'call failed:'+str(e)

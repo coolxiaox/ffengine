@@ -89,7 +89,8 @@ class ffresponser_t
 {
 public:
     virtual ~ffresponser_t(){}
-    virtual void response(const string& dest_namespace_, const string& msg_name_,  uint64_t dest_node_id_, int64_t callback_id_, const string& body_) = 0;
+    virtual void response(const string& dest_namespace_, const string& msg_name_,  uint64_t dest_node_id_,
+                          int64_t callback_id_, const string& body_, string err = "") = 0;
 };
 
 class ffslot_req_arg: public ffslot_t::callback_arg_t
