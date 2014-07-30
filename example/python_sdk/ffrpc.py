@@ -23,11 +23,13 @@ def encode_msg(msg, g_protocol = 0):
         g_WriteTMemoryBuffer.cstringio_buf.seek(0)
         if g_protocol == 1:
             proto = TJSONProtocol.TJSONProtocol(g_WriteTMemoryBuffer)
-            proto.writeMessageBegin('ff', 0, 0);
+            proto.writeMessageBegin(msg.__class__.__name__, 0, 0);
             msg.write(proto)
             proto.writeMessageEnd();
         else:
+            g_WriteTBinaryProtocol.writeMessageBegin(msg.__class__.__name__, 0, 0);
             msg.write(g_WriteTBinaryProtocol)
+            g_WriteTBinaryProtocol.writeMessageEnd();
         return g_WriteTMemoryBuffer.getvalue()
     elif hasattr(msg, 'SerializeToString'):
         return msg.SerializeToString()
@@ -47,7 +49,9 @@ def decode_msg(dest_msg, body_data, g_protocol = 0):
 			dest_msg.read(proto)
 			proto.readMessageEnd();
 		else:
+			g_ReadTBinaryProtocol.readMessageBegin();
 			dest_msg.read(g_ReadTBinaryProtocol)
+			g_ReadTBinaryProtocol.readMessageEnd();
 	elif hasattr(dest_msg, 'SerializeFromString'):
 		dest_msg.SerializeFromString(body_data)
 	return dest_msg

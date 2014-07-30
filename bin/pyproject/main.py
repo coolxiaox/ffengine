@@ -7,7 +7,7 @@ import echo_msg_def.ttypes as ttypes
 
 def init():
     print('init......')
-    #ffext.set_protocol_type('json')
+    ffext.set_protocol_type('json')
     if db_service.init() == False:
         return -1
     return 0

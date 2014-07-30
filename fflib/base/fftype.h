@@ -13,12 +13,13 @@
 #include <map>
 using namespace std;
 
+#define TYPEID(X)              singleton_t<ff::type_helper_t<X> >::instance().id()
+#define TYPE_NAME(X)           singleton_t<ff::type_helper_t<X> >::instance().get_type_name()
+#define TYPE_NAME_TO_ID(name_) singleton_t<ff::type_id_generator_t>::instance().get_id_by_name(name_)
+
 namespace ff
 {
-    
-#define TYPEID(X)              singleton_t<type_helper_t<X> >::instance().id()
-#define TYPE_NAME(X)           singleton_t<type_helper_t<X> >::instance().get_type_name()
-#define TYPE_NAME_TO_ID(name_) singleton_t<type_id_generator_t>::instance().get_id_by_name(name_)
+
 
 
 template<typename T>

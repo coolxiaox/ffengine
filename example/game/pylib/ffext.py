@@ -71,7 +71,9 @@ def decode_buff(dest, val_):
         dest.read(proto)
         proto.readMessageEnd();
     else:
+        g_ReadTBinaryProtocol.readMessageBegin();
         dest.read(g_ReadTBinaryProtocol)
+        g_ReadTBinaryProtocol.readMessageEnd();
     return dest
 
 def encode_msg(msg):
@@ -110,7 +112,9 @@ def session_call(cmd_, protocol_type_ = 'json', convert_func_ = ignore_id):
                     g_ReadTMemoryBuffer.cstringio_buf.seek(0)
                     g_ReadTMemoryBuffer.cstringio_buf.write(val_)
                     g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+                    g_ReadTBinaryProtocol.readMessageBegin();
                     dest.read(g_ReadTBinaryProtocol);
+                    g_ReadTBinaryProtocol.readMessageEnd();
                     #mb2 = TTransport.TMemoryBuffer(val_)
                     #bp2 = TBinaryProtocol.TBinaryProtocol(mb2)
                     #dest.read(bp2);
@@ -335,7 +339,9 @@ def to_str(msg):
             proto.writeMessageEnd();
             ret = tmp_WriteTMemoryBuffer.getvalue()
         else:
+            g_WriteTBinaryProtocol.writeMessageBegin(msg.__class__.__name__, 0, 0);
             msg.write(g_WriteTBinaryProtocol)
+            g_WriteTBinaryProtocol.writeMessageEnd();
             ret = g_WriteTMemoryBuffer.getvalue()
         #print('tostr',len(ret), ret)
         return ret
