@@ -893,5 +893,6 @@ void ffscene_python_t::rpc_response(long callback_id, const string& msg_name, co
     {
         ffslot_req_arg& req = it->second;
         req.responser->response(req.dest_namespace, msg_name, req.dest_node_id, req.callback_id, body);
+        m_cache_req.erase(it);
     }
 }

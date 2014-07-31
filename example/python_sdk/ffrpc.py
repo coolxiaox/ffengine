@@ -159,8 +159,7 @@ class ffrpc_t:
 		return True
 
 
-if __name__ == '__main__':
-
+def test():
     HOST = '127.0.0.1'
     PORT = 40241
     ffc = ffrpc_t(HOST, PORT, 15)
@@ -169,4 +168,11 @@ if __name__ == '__main__':
     ret = ttypes.echo_thrift_out_t()
     ffc.call('scene@0', req, ret)
     
-    print('error_info = %s' %(ffc.error_msg()), ret)
+    #print('error_info = %s' %(ffc.error_msg()), ret)
+
+if __name__ == '__main__':
+    num = 1000
+    for k in range(0, num):
+        test()
+
+    print('test end')
