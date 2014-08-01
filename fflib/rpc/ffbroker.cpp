@@ -120,7 +120,11 @@ int ffbroker_t::close()
     //usleep(100);
     return 0;
 }
-
+task_queue_i* ffbroker_t::get_tq_ptr()
+{
+    return &m_tq;
+}
+/*
 int ffbroker_t::handle_broken(socket_ptr_t sock_)
 {
     m_tq.produce(task_binder_t::gen(&ffbroker_t::handle_broken_impl, this, sock_));
@@ -130,9 +134,9 @@ int ffbroker_t::handle_msg(const message_t& msg_, socket_ptr_t sock_)
 {
     m_tq.produce(task_binder_t::gen(&ffbroker_t::handle_msg_impl, this, msg_, sock_));
     return 0;
-}
+}*/
 //! 当有连接断开，则被回调
-int ffbroker_t::handle_broken_impl(socket_ptr_t sock_)
+int ffbroker_t::handle_broken(socket_ptr_t sock_)
 {
     LOGTRACE((BROKER, "ffbroker_t::handle_broken_impl begin"));
     session_data_t* psession = sock_->get_data<session_data_t>();
@@ -187,7 +191,7 @@ int ffbroker_t::handle_broken_impl(socket_ptr_t sock_)
 
 }
 //! 当有消息到来，被回调
-int ffbroker_t::handle_msg_impl(const message_t& msg_, socket_ptr_t sock_)
+int ffbroker_t::handle_msg(const message_t& msg_, socket_ptr_t sock_)
 {
     uint16_t cmd = msg_.get_cmd();
     LOGTRACE((BROKER, "ffbroker_t::handle_msg_impl cmd<%u> begin", cmd));

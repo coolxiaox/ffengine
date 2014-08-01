@@ -1,6 +1,7 @@
 #include "net/common_socket_controller.h"
 #include "net/socket_i.h"
 #include "base/strtool.h"
+#include "base/task_queue_impl.h"
 
 #include <string.h>
 #include <assert.h>
@@ -27,7 +28,12 @@ common_socket_controller_t::~common_socket_controller_t()
 //! logic layer has responsibily to deconstruct the socket object
 int common_socket_controller_t::handle_error(socket_i* sp_)
 {
-    m_msg_handler->handle_broken(sp_);
+    if (m_msg_handler->get_tq_ptr()){
+        m_msg_handler->get_tq_ptr()->produce(task_binder_t::gen(&msg_handler_i::handle_broken, m_msg_handler, sp_));
+    }
+    else{
+        m_msg_handler->handle_broken(sp_);
+    }
     return 0;
 }
 
@@ -54,7 +60,13 @@ int common_socket_controller_t::handle_read(socket_i* sp_, char* buff, size_t le
         
         if (m_message.get_body().size() == m_message.size())
         {
-            m_msg_handler->handle_msg(m_message, sp_);
+            if (m_msg_handler->get_tq_ptr()){
+                m_msg_handler->get_tq_ptr()->produce(task_binder_t::gen(&msg_handler_i::handle_msg,
+                                                     m_msg_handler, m_message, sp_));
+            }
+            else{
+                m_msg_handler->handle_msg(m_message, sp_);
+            }
             m_have_recv_size = 0;
             m_message.clear();
         }

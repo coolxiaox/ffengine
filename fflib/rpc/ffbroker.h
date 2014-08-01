@@ -43,6 +43,7 @@ public:
     int handle_broken(socket_ptr_t sock_);
     //! 当有消息到来，被回调
     int handle_msg(const message_t& msg_, socket_ptr_t sock_);
+    task_queue_i* get_tq_ptr();
 
     //! 处理其他broker或者client注册到此server
     int handle_regiter_to_broker(register_to_broker_t::in_t& msg_, socket_ptr_t sock_);
@@ -77,9 +78,9 @@ public:
     int connect_to_bridge_broker();
 private:
     //! 当有连接断开，则被回调
-    int handle_broken_impl(socket_ptr_t sock_);
+    //int handle_broken_impl(socket_ptr_t sock_);
     //! 当有消息到来，被回调
-    int handle_msg_impl(const message_t& msg_, socket_ptr_t sock_);
+    //int handle_msg_impl(const message_t& msg_, socket_ptr_t sock_);
     
     //! 同步给所有的节点，当前的各个节点的信息
     int sync_node_info(register_to_broker_t::out_t& ret_msg, socket_ptr_t sock_ = NULL);

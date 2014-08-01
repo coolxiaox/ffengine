@@ -163,6 +163,11 @@ task_queue_t& ffrpc_t::get_tq()
 {
     return m_tq;
 }
+task_queue_i* ffrpc_t::get_tq_ptr()
+{
+    return &m_tq;
+}
+/*
 int ffrpc_t::handle_broken(socket_ptr_t sock_)
 {
     m_tq.produce(task_binder_t::gen(&ffrpc_t::handle_broken_impl, this, sock_));
@@ -173,8 +178,8 @@ int ffrpc_t::handle_msg(const message_t& msg_, socket_ptr_t sock_)
     m_tq.produce(task_binder_t::gen(&ffrpc_t::handle_msg_impl, this, msg_, sock_));
     return 0;
 }
-
-int ffrpc_t::handle_broken_impl(socket_ptr_t sock_)
+*/
+int ffrpc_t::handle_broken(socket_ptr_t sock_)
 {
     //! 设置定时器重练
     if (m_master_broker_sock == sock_)
@@ -202,7 +207,7 @@ int ffrpc_t::handle_broken_impl(socket_ptr_t sock_)
     return 0;
 }
 
-int ffrpc_t::handle_msg_impl(const message_t& msg_, socket_ptr_t sock_)
+int ffrpc_t::handle_msg(const message_t& msg_, socket_ptr_t sock_)
 {
     uint16_t cmd = msg_.get_cmd();
     LOGTRACE((FFRPC, "ffrpc_t::handle_msg_impl cmd[%u] begin", cmd));

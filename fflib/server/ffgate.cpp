@@ -67,21 +67,31 @@ int ffgate_t::close_impl()
     }
     return 0;
 }
+
+task_queue_i* ffgate_t::get_tq_ptr()
+{
+    return &(m_ffrpc->get_tq());
+}
 //! 处理连接断开
+/*
 int ffgate_t::handle_broken(socket_ptr_t sock_)
 {
     m_ffrpc->get_tq().produce(task_binder_t::gen(&ffgate_t::handle_broken_impl, this, sock_));
     return 0;
 }
+*/
+
 //! 处理消息
+/*
 int ffgate_t::handle_msg(const message_t& msg_, socket_ptr_t sock_)
 {
     m_ffrpc->get_tq().produce(task_binder_t::gen(&ffgate_t::handle_msg_impl, this, msg_, sock_));
     return 0;
 }
+*/
 
 //! 处理连接断开
-int ffgate_t::handle_broken_impl(socket_ptr_t sock_)
+int ffgate_t::handle_broken(socket_ptr_t sock_)
 {
     session_data_t* session_data = sock_->get_data<session_data_t>();
     if (NULL == session_data)
@@ -115,7 +125,7 @@ int ffgate_t::handle_broken_impl(socket_ptr_t sock_)
     return 0;
 }
 //! 处理消息
-int ffgate_t::handle_msg_impl(const message_t& msg_, socket_ptr_t sock_)
+int ffgate_t::handle_msg(const message_t& msg_, socket_ptr_t sock_)
 {
     session_data_t* session_data = sock_->get_data<session_data_t>();
     if (NULL == session_data)//! 还未验证sessionid

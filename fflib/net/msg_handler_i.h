@@ -5,6 +5,7 @@
 #include "net/socket_i.h"
 
 namespace ff {
+class task_queue_i;
 
 class msg_handler_i
 {
@@ -14,6 +15,7 @@ public:
     virtual int handle_broken(socket_ptr_t sock_)  = 0;
     virtual int handle_msg(const message_t& msg_, socket_ptr_t sock_) = 0;
 
+    virtual task_queue_i* get_tq_ptr() = 0;
 };
 
 typedef msg_handler_i* msg_handler_ptr_t;

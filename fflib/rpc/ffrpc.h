@@ -35,6 +35,7 @@ public:
     int handle_broken(socket_ptr_t sock_);
     //! 处理消息
     int handle_msg(const message_t& msg_, socket_ptr_t sock_);
+    task_queue_i* get_tq_ptr();
 
     //! 注册接口
     template <typename R, typename IN, typename OUT>
@@ -92,9 +93,9 @@ public:
 	void reg(const string& name_, ffslot_t::callback_t* func_);
 private:
     //! 处理连接断开
-    int handle_broken_impl(socket_ptr_t sock_);
+    //int handle_broken_impl(socket_ptr_t sock_);
     //! 处理消息
-    int handle_msg_impl(const message_t& msg_, socket_ptr_t sock_);
+    //int handle_msg_impl(const message_t& msg_, socket_ptr_t sock_);
     //! 连接到broker master
     socket_ptr_t connect_to_broker(const string& host_, uint32_t node_id_);
     

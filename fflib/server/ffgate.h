@@ -42,12 +42,13 @@ public:
     //! 处理消息
     int handle_msg(const message_t& msg_, socket_ptr_t sock_);
     
+    task_queue_i* get_tq_ptr();
 private:
     int close_impl();
     //! 处理连接断开
-    int handle_broken_impl(socket_ptr_t sock_);
+    //int handle_broken_impl(socket_ptr_t sock_);
     //! 处理消息
-    int handle_msg_impl(const message_t& msg_, socket_ptr_t sock_);
+    //int handle_msg_impl(const message_t& msg_, socket_ptr_t sock_);
     //! 验证sessionid
     int verify_session_id(const message_t& msg_, socket_ptr_t sock_);
     //! 验证sessionid 的回调函数
