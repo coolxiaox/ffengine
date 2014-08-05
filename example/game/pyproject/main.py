@@ -5,7 +5,6 @@ from model import db_service
 
 def init():
     print('init......')
-    ffext.set_protocol_type('json')
     if db_service.init() == False:
         return -1
 

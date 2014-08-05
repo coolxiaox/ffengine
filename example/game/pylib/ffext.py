@@ -48,38 +48,72 @@ def protobuf_to_value(msg_type_, val_):
     dest.ParseFromString(val_)
     return dest
 
-g_protocol = 0 #1 json
 g_ReadTMemoryBuffer   = TTransport.TMemoryBuffer()
 g_ReadTBinaryProtocol = TBinaryProtocol.TBinaryProtocol(g_ReadTMemoryBuffer)
 
-def set_protocol_type(s):
-    global g_protocol
-    if s == "json":
-        g_protocol = 1
-    print('set_protocol_type', g_protocol)
-    return True
+def is_json_obj(val_):
+    if len(val_) == 0:
+        return False
+    return val_[0] == '[' or val_[0] == '{'
+def is_thrift(obj_):
+    return hasattr(obj_, 'thrift_spec')
 
-def decode_buff(dest, val_):
+
+g_WriteTMemoryBuffer   = TTransport.TMemoryBuffer()
+g_WriteTBinaryProtocol = TBinaryProtocol.TBinaryProtocol(g_WriteTMemoryBuffer)
+
+def encode_msg(msg, is_json = False):
+    if hasattr(msg, 'thrift_spec'):
+        global g_WriteTMemoryBuffer, g_WriteTBinaryProtocol
+        g_WriteTMemoryBuffer.cstringio_buf.truncate()
+        g_WriteTMemoryBuffer.cstringio_buf.seek(0)
+        ret = ''
+        if is_json:
+            tmp_WriteTMemoryBuffer   = TTransport.TMemoryBuffer()
+            proto = TJSONProtocol.TJSONProtocol(tmp_WriteTMemoryBuffer)
+            proto.writeMessageBegin(msg.__class__.__name__, 0, 0);
+            msg.write(proto)
+            proto.writeMessageEnd();
+            ret = tmp_WriteTMemoryBuffer.getvalue()
+        else:
+            g_WriteTBinaryProtocol.writeMessageBegin(msg.__class__.__name__, 0, 0);
+            msg.write(g_WriteTBinaryProtocol)
+            g_WriteTBinaryProtocol.writeMessageEnd();
+            ret = g_WriteTMemoryBuffer.getvalue()
+        return ret
+    elif hasattr(msg, 'SerializeToString'):
+        return msg.SerializeToString()
+    elif isinstance(msg, unicode):
+        return msg.encode('utf-8')
+    elif isinstance(msg, str):
+        return msg
+    elif msg.__class__ == int or msg.__class__ == long or msg.__class__ == float:
+        return str(msg)
+    else:
+        return json.dumps(msg, ensure_ascii=False)
+
+def decode_msg(dest, val_):
     global g_ReadTMemoryBuffer, g_ReadTBinaryProtocol
-    g_ReadTMemoryBuffer.cstringio_buf.truncate()
-    g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-    g_ReadTMemoryBuffer.cstringio_buf.write(val_)
-    g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-    if g_protocol == 1:
+    if is_json_obj(val_):
+        g_ReadTMemoryBuffer.cstringio_buf.truncate()
+        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+        g_ReadTMemoryBuffer.cstringio_buf.write(val_)
+        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
         proto = TJSONProtocol.TJSONProtocol(g_ReadTMemoryBuffer)
         proto.readMessageBegin();
         dest.read(proto)
         proto.readMessageEnd();
-    else:
+    elif is_thrift(dest):
+        g_ReadTMemoryBuffer.cstringio_buf.truncate()
+        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+        g_ReadTMemoryBuffer.cstringio_buf.write(val_)
+        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
         g_ReadTBinaryProtocol.readMessageBegin();
         dest.read(g_ReadTBinaryProtocol)
         g_ReadTBinaryProtocol.readMessageEnd();
+    else:
+        dest.ParseFromString(val_)
     return dest
-
-def encode_msg(msg):
-    return to_str(msg)
-def decode_msg(dest, val_):
-    return decode_buff(dest, val_)
 
 def ignore_id(id_):
     return id_
@@ -90,37 +124,10 @@ def session_call(cmd_, protocol_type_ = 'json', convert_func_ = ignore_id):
             g_session_logic_callback_dict[cmd_] = (json_to_value, func_, convert_func_)
         elif hasattr(protocol_type_, 'thrift_spec'):
             def thrift_to_value(val_):
-                if g_protocol == 1:
-                    dest = protocol_type_()
-                    tmp_ReadTMemoryBuffer   = TTransport.TMemoryBuffer()
-                    tmp_ReadTJsonProtocol   = TJSONProtocol.TJSONProtocol(tmp_ReadTMemoryBuffer)
-                    tmp_ReadTMemoryBuffer.cstringio_buf.truncate()
-                    tmp_ReadTMemoryBuffer.cstringio_buf.seek(0)
-                    tmp_ReadTMemoryBuffer.cstringio_buf.write(val_)
-                    tmp_ReadTMemoryBuffer.cstringio_buf.seek(0)
-                    tmp_ReadTJsonProtocol.readMessageBegin();
-                    dest.read(tmp_ReadTJsonProtocol);
-                    tmp_ReadTJsonProtocol.readMessageEnd();
-                    #mb2 = TTransport.TMemoryBuffer(val_)
-                    #bp2 = TBinaryProtocol.TBinaryProtocol(mb2)
-                    #dest.read(bp2);
-                    return dest
-                else:
-                    dest = protocol_type_()
-                    global g_ReadTMemoryBuffer, g_ReadTBinaryProtocol
-                    g_ReadTMemoryBuffer.cstringio_buf.truncate()
-                    g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-                    g_ReadTMemoryBuffer.cstringio_buf.write(val_)
-                    g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-                    g_ReadTBinaryProtocol.readMessageBegin();
-                    dest.read(g_ReadTBinaryProtocol);
-                    g_ReadTBinaryProtocol.readMessageEnd();
-                    #mb2 = TTransport.TMemoryBuffer(val_)
-                    #bp2 = TBinaryProtocol.TBinaryProtocol(mb2)
-                    #dest.read(bp2);
-                    return dest
+                dest = protocol_type_()
+                decode_msg(dest, val_)
+                return dest
             g_session_logic_callback_dict[cmd_] = (thrift_to_value, func_, convert_func_)
-
         else: #protobuf
             def protobuf_to_value(val_):
                 dest = protocol_type_()
@@ -176,7 +183,7 @@ def ff_set_group_name(group_name):
 def ff_get_group_name():
     return g_group_name
 class session_t:
-    def __init__(self, socket_id_, ip, group_name, gate_name):
+    def __init__(self, socket_id_, ip, group_name, gate_name, is_json = False):
         self.socket_id   = socket_id_
         self.ip          = ip
         self.group_name  = group_name
@@ -185,9 +192,9 @@ class session_t:
         self.m_name      = ''
         self.player      = None
         self.kf_flag     = False
+        self.is_json     = is_json
         if self.group_name != '' and ff_get_group_name() != self.group_name and ff_get_group_name() != '':
             self.kf_flag = True
-        #print('group_name:%s'%(ff_get_group_name()))
     #判断是否仍然有效
     def is_valid(self):
         if get_session_mgr().get_by_sock(self.socket_id):
@@ -197,7 +204,6 @@ class session_t:
         self.m_id = id_
         if self.m_id != 0:
             get_session_mgr().add(self.m_id, self.socket_id, self)
-        #print('verify_id', id_)
     def get_id(self):
         return self.m_id
     def get_name(self):
@@ -206,16 +212,16 @@ class session_t:
         self.name = name
     def send_msg(self, cmd, ret_msg):
         if self.kf_flag == False:
-            send_msg_session(self.gate_name, self.socket_id, cmd, ret_msg)
+            send_msg_session(self.gate_name, self.socket_id, cmd, encode_msg(ret_msg, self.is_json))
         else:
-            kf_send_msg_session(self.group_name, self.gate_name, self.socket_id, cmd, ret_msg)
+            kf_send_msg_session(self.group_name, self.gate_name, self.socket_id, cmd, encode_msg(ret_msg, self.is_json))
     def broadcast(self, cmd, ret_msg):
-        ret_msg = encode_msg(ret_msg)
+        ret_msg = encode_msg(ret_msg, self.is_json)
         def cb(tmp_session):
             tmp_session.send_msg(cmd, ret_msg)
         g_session_mgr.foreach(cb)
     def goto_scene(self, name_, msg_):
-        change_session_scene(self.gate_name, self.socket_id, name_, encode_msg(msg_))
+        change_session_scene(self.gate_name, self.socket_id, name_, encode_msg(msg_, self.is_json))
         get_session_mgr().remove(self.get_id())
     def goto_kf_scene(self, group_name, name_, msg_):
         change_session_kf_scene(group_name, self.gate_name, self.socket_id, name_, encode_msg(msg_))
@@ -246,7 +252,7 @@ def on_enter(msg_type):
     def wrap_enter(func_):
         global g_session_enter_callback
         def to_session(group_name, gate_name, socket_id, from_scene, extra_data):
-            session_vefify = session_t(socket_id, '', group_name, gate_name)
+            session_vefify = session_t(socket_id, '', group_name, gate_name, is_json_obj(extra_data))
             get_session_mgr().add_socket(socket_id, session_vefify)
             dest_msg = msg_type()
             decode_msg(dest_msg, extra_data)
@@ -276,7 +282,8 @@ def ff_session_verify(cmd, session_body, socket_id, ip, gate_name):
         return 0
     arg  = info[0](session_body)
     convert_func = info[2]
-    session_vefify = session_t(socket_id, ip, '', gate_name)
+
+    session_vefify = session_t(socket_id, ip, '', gate_name, is_json_obj(session_body))
     get_session_mgr().add_socket(socket_id, session_vefify)
     return info[1](session_vefify, arg)
 
@@ -322,52 +329,20 @@ def ff_timer_callback(id):
         print traceback.format_exc()
         return False
 
-g_WriteTMemoryBuffer   = TTransport.TMemoryBuffer()
-g_WriteTBinaryProtocol = TBinaryProtocol.TBinaryProtocol(g_WriteTMemoryBuffer)
-
-def to_str(msg):
-    if hasattr(msg, 'thrift_spec'):
-        global g_WriteTMemoryBuffer, g_WriteTBinaryProtocol
-        g_WriteTMemoryBuffer.cstringio_buf.truncate()
-        g_WriteTMemoryBuffer.cstringio_buf.seek(0)
-        ret = ''
-        if g_protocol == 1:
-            tmp_WriteTMemoryBuffer   = TTransport.TMemoryBuffer()
-            proto = TJSONProtocol.TJSONProtocol(tmp_WriteTMemoryBuffer)
-            proto.writeMessageBegin(msg.__class__.__name__, 0, 0);
-            msg.write(proto)
-            proto.writeMessageEnd();
-            ret = tmp_WriteTMemoryBuffer.getvalue()
-        else:
-            g_WriteTBinaryProtocol.writeMessageBegin(msg.__class__.__name__, 0, 0);
-            msg.write(g_WriteTBinaryProtocol)
-            g_WriteTBinaryProtocol.writeMessageEnd();
-            ret = g_WriteTMemoryBuffer.getvalue()
-        #print('tostr',len(ret), ret)
-        return ret
-    elif hasattr(msg, 'SerializeToString'):
-        return msg.SerializeToString()
-    elif isinstance(msg, unicode):
-        return msg.encode('utf-8')
-    elif isinstance(msg, str):
-        return msg
-    elif msg.__class__ == int or msg.__class__ == long or msg.__class__ == float:
-        return str(msg)
-    else:
-        return json.dumps(msg, ensure_ascii=False)
-
 def send_msg_session(gate_name, session_id, cmd_, body):
     if str != body.__class__:
         body = encode_msg(body)
     return ff.py_send_msg_session(gate_name, session_id, cmd_, body)
 def kf_send_msg_session(group_name, gate_name, session_id, cmd_, body):
-    return ff.py_kf_send_msg_session(group_name, gate_name, session_id, cmd_, to_str(body))
+    if str != body.__class__:
+        body = encode_msg(body)
+    return ff.py_kf_send_msg_session(group_name, gate_name, session_id, cmd_, body)
 
 def multi_send_msg_session(session_id_list, cmd_, body):
-    return ff.ffscene_obj.multicast_msg_session(session_id_list, cmd_, to_str(body))
+    return ff.ffscene_obj.multicast_msg_session(session_id_list, cmd_, encode_msg(body))
 #def broadcast_msg_session(cmd_, body):
-#    return ff.py_broadcast_msg_session(cmd_, to_str(body))
-#    return ff.ffscene_obj.broadcast_msg_session(cmd_, to_str(body))
+#    return ff.py_broadcast_msg_session(cmd_, encode_msg(body))
+#    return ff.ffscene_obj.broadcast_msg_session(cmd_, encode_msg(body))
 def broadcast_msg_gate(gate_name_, cmd_, body):
     return ff.ffscene_obj.broadcast_msg_gate(gate_name_, cmd_, body)
 def close_session(uid):
@@ -554,17 +529,18 @@ g_call_service_id   = 1
 
 #ffrpc对象
 class ffreq_t:
-    def __init__(self, callback_id):
+    def __init__(self, callback_id, is_json_ = False):
         self.msg = None
         self.err = None
         self.callback_id = callback_id
+        self.is_json     = is_json_
     def response(self, msg):
         if self.callback_id == 0:
             return
         if msg.__class__ == str or msg.__class__ == list or msg.__class__ == dict:
-            return ff.ffscene.rpc_response(self.callback_id, '', encode_msg(msg))
+            return ff.ffscene.rpc_response(self.callback_id, '', encode_msg(msg, self.is_json))
         else:
-            return ff.ffscene.rpc_response(self.callback_id, msg.__class__.__name__, encode_msg(msg))
+            return ff.ffscene.rpc_response(self.callback_id, msg.__class__.__name__, encode_msg(msg, self.is_json))
     def __repr__(self):
         return 'msg:'+ `self.msg`+',err:'+str(self.err)
 
@@ -573,7 +549,7 @@ def ff_reg_scene_interfacee(req_msg, ret_msg = '', name_space_ = ''):
     global g_reg_scene_interface_dict
     def json_interface_wrap(func):
         def json_process(body, callback_id):
-            ffreq = ffreq_t(callback_id)
+            ffreq = ffreq_t(callback_id, is_json_obj(body))
             ffreq.msg = json_to_value(body)
             func(ffreq)
         g_reg_scene_interface_dict[req_msg] = json_process
@@ -581,7 +557,7 @@ def ff_reg_scene_interfacee(req_msg, ret_msg = '', name_space_ = ''):
         return func
     def bin_interface_wrap(func):
         def bin_process(body, callback_id):
-            ffreq = ffreq_t(callback_id)
+            ffreq = ffreq_t(callback_id, is_json_obj(body))
             ffreq.msg = req_msg()
             decode_msg(ffreq.msg, body)
             func(ffreq)
@@ -600,6 +576,7 @@ def ff_call_scene_interface(name, body, callback_id):
     if None == func:
         print('dest name=%s not found'%(name))
         return
+    #print('ff_call_scene_interface body_len=%d'%(len(body)))
     func(body, callback_id)
     
 #调用外部的接口 
