@@ -283,7 +283,11 @@ int ffscene_python_t::open(arg_helper_t& arg_helper)
     ffpython_t::add_path("./pylib");
     if (arg_helper.is_enable_option("-python_path"))
     {
-        ffpython_t::add_path(arg_helper.get_option_value("-python_path"));
+        vector<string> vec_path;
+        strtool::split(arg_helper.get_option_value("-python_path"), vec_path, ";");
+        for (size_t i = 0; i < vec_path.size(); ++i){
+            ffpython_t::add_path(vec_path[i]);
+        }
     }
     
     m_db_mgr.start();
