@@ -1,8 +1,0 @@
-
-message TestMsg
-{
-    required int32 id=1;
-    required int32 time=2;
-    optional string note=3;
-}
-
