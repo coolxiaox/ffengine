@@ -168,10 +168,10 @@ def test():
     ret = ttypes.echo_thrift_out_t()
     ffc.call('scene@0', req, ret)
     
-    #print('error_info = %s' %(ffc.error_msg()), ret)
+    print('error_info = %s' %(ffc.error_msg()), ret)
 
 if __name__ == '__main__':
-    num = 1000
+    num = 1
     for k in range(0, num):
         test()
 
