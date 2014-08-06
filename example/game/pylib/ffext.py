@@ -94,23 +94,24 @@ def encode_msg(msg, is_json = False):
 
 def decode_msg(dest, val_):
     global g_ReadTMemoryBuffer, g_ReadTBinaryProtocol
-    if is_json_obj(val_):
-        g_ReadTMemoryBuffer.cstringio_buf.truncate()
-        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-        g_ReadTMemoryBuffer.cstringio_buf.write(val_)
-        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-        proto = TJSONProtocol.TJSONProtocol(g_ReadTMemoryBuffer)
-        proto.readMessageBegin();
-        dest.read(proto)
-        proto.readMessageEnd();
-    elif is_thrift(dest):
-        g_ReadTMemoryBuffer.cstringio_buf.truncate()
-        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-        g_ReadTMemoryBuffer.cstringio_buf.write(val_)
-        g_ReadTMemoryBuffer.cstringio_buf.seek(0)
-        g_ReadTBinaryProtocol.readMessageBegin();
-        dest.read(g_ReadTBinaryProtocol)
-        g_ReadTBinaryProtocol.readMessageEnd();
+    if is_thrift(dest):
+        if is_json_obj(val_):
+            g_ReadTMemoryBuffer.cstringio_buf.truncate()
+            g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+            g_ReadTMemoryBuffer.cstringio_buf.write(val_)
+            g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+            proto = TJSONProtocol.TJSONProtocol(g_ReadTMemoryBuffer)
+            proto.readMessageBegin()
+            dest.read(proto)
+            proto.readMessageEnd()
+        else:
+            g_ReadTMemoryBuffer.cstringio_buf.truncate()
+            g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+            g_ReadTMemoryBuffer.cstringio_buf.write(val_)
+            g_ReadTMemoryBuffer.cstringio_buf.seek(0)
+            g_ReadTBinaryProtocol.readMessageBegin()
+            dest.read(g_ReadTBinaryProtocol)
+            g_ReadTBinaryProtocol.readMessageEnd()
     else:
         dest.ParseFromString(val_)
     return dest
